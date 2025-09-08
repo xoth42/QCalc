@@ -139,7 +139,7 @@ begin
 		i = imag(z)
 		return sqrt(r^2 + i^2)
 	end
-	function comp_out(z)
+	function comp_out(z) # Turn a complex number value into a pretty output like 1 + 1im, removing the imaginary part if needed
 		# if number is less than err in magnitude
 		if norm(z) < err
 			return "0"
@@ -149,7 +149,7 @@ begin
 		r = real(z)
 		i = imag(z)
 		if r > err || r < -err # real part is nonzero
-			str *= @sprintf "%1.3f" r
+			str *= @sprintf "%1.2f" r
 		end
 	 	if i > err || i < -err # i is nonzero
 			if str != "" # there was a real number
@@ -163,14 +163,14 @@ begin
 			# 	str *= "- "
 			end
 			# now add the imag num
-			str *= @sprintf "%1.3fim" i
+			str *= @sprintf "%1.2fim" i
 		end
 		return str
 	end
 
 	function pretty_matrix(m)
 		cout = comp_out.(m)
-		return "[\t$(cout[1])\t$(cout[2])\n\t$(cout[3])\t$(cout[4])\t]"
+		return "[\t$(cout[1])\t$(cout[3])\n\t$(cout[2])\t$(cout[4])\t]"
 	end
 
 end
@@ -257,53 +257,98 @@ begin
 end
 
 
+# ╔═╡ e67c9298-5175-4692-93c9-cc5c7b6e33fa
+md"QCliff representation:"
+
+# ╔═╡ 300ee489-b091-418e-a13f-28832e33c3e2
+dump(stab_op)
+
+# ╔═╡ a514a4bf-3b40-4d1a-b9a5-7ee6374a5f52
+stab_op
+
 # ╔═╡ f5ba370b-82be-4f8a-8d79-e0cce14d1efc
 begin
-	target_range = 0:pi/2:4pi
-	target_ranges = (target_range,target_range,target_range)
-	target = matrix # set target to the unknown gate
-	
-	# target = (1/sqrt(2))*[ # test
-	# 	1+0im	1+0im;
-	# 	1+0im	-1+0im
-	# ]
-	
-	out = find_3params_for_gate(target_ranges,U,target)
+	function find_this_gate(gate,grain=pi/2)
+		target_range = 0:grain:4pi
+		target_ranges = (target_range,target_range,target_range)
+		target = gate # set target to the unknown gate
+		return find_3params_for_gate(target_ranges,U,target)
+	end
+	out = find_this_gate(matrix);nothing
 end
 
 # ╔═╡ 67477359-634f-49ad-b32d-7190742ad45e
 md"Resulting params:  U(θ,ϕ,λ)"
 
+# ╔═╡ cb220082-061e-4475-aad3-7b080a71a201
+begin
+	
+	function pretty_param(param; err=1e-10) # the param will come in (ex: 0, 1.5708, 4.71239...)
+		# and we need to return a readable factor of pi
+		if param < 0
+			return param # should not be negative
+		end
+
+		# it is under error cutoff (basically zero)
+		if param < err 
+			return 0
+		end
+		
+		pis = param / pi # initial factors of pi
+
+		# re-use another func for cleanup
+		pis = comp_out(pis + 0im)
+				
+		return "$(pis)π"
+	end
+
+	function pparams(params;init="U")
+		s =  "$(init)("
+		for i in 1:2
+			s *= string(pretty_param(params[i]))
+			s *= ", "
+		end
+		s *=  string(pretty_param(params[3]) )
+		s *= ")"
+		return s
+	end
+end
+
 # ╔═╡ 234025cd-9ffa-4958-8a55-8d6cc6e1b144
-out == nothing ? "not found" : out[1]
+out == nothing ? "not found" : pparams(out[1])
+
+# ╔═╡ 3473cfca-190f-45f8-968a-0613ee2042ac
+md"For this gate:"
 
 # ╔═╡ c4cb1323-42ff-4d38-b76a-e3e8b8928823
 begin
-	
-	output_m = comp_out.(out[2])
-	println(output_m[1:2])
-	println(output_m)
-
+	# println(out[2])
+	println(pretty_matrix(out[2]))
 end
 
 # ╔═╡ Cell order:
 # ╠═d62e8a66-84d9-11f0-13c4-c12995195713
-# ╠═68f5b298-8de1-4a6e-a2b9-fea70ddf9c2a
+# ╟─68f5b298-8de1-4a6e-a2b9-fea70ddf9c2a
 # ╟─c82d3aa7-2a32-4b34-839d-fbd78464094c
 # ╟─b11d0525-1bfc-458d-a46a-dd15992b3964
 # ╟─59d7a44f-c33b-4051-9a33-39bb4701fcd8
 # ╟─56f7c249-af4b-4ed2-a341-408e87f8bb6b
-# ╠═a5980897-5328-4d11-a22c-f4cb29a672c3
+# ╟─a5980897-5328-4d11-a22c-f4cb29a672c3
 # ╟─2cf46b08-0b96-415c-b345-df503ec14af7
-# ╠═206f6d52-4c8e-499d-8d2f-ca0e7bbe5417
+# ╟─206f6d52-4c8e-499d-8d2f-ca0e7bbe5417
 # ╟─3fbff09a-db52-44a9-aa5e-812059d5875a
 # ╠═dd1dd101-4e38-4b14-8021-2752ec46ac54
 # ╟─aa03cae3-ec49-42c1-a667-bc0d55a2d6ad
 # ╟─3a58c739-f72b-4bd8-a596-07e822281ad7
 # ╟─ea29edf4-bc01-487d-be1e-a74321c34686
 # ╟─ab48c4af-80fc-4a49-8a92-9cf7eda20ef2
+# ╟─e67c9298-5175-4692-93c9-cc5c7b6e33fa
+# ╟─300ee489-b091-418e-a13f-28832e33c3e2
+# ╟─a514a4bf-3b40-4d1a-b9a5-7ee6374a5f52
 # ╟─45b89936-efcf-4f9a-b76a-ec0f9e07dc9b
-# ╠═f5ba370b-82be-4f8a-8d79-e0cce14d1efc
+# ╟─f5ba370b-82be-4f8a-8d79-e0cce14d1efc
 # ╟─67477359-634f-49ad-b32d-7190742ad45e
+# ╟─cb220082-061e-4475-aad3-7b080a71a201
 # ╠═234025cd-9ffa-4958-8a55-8d6cc6e1b144
-# ╠═c4cb1323-42ff-4d38-b76a-e3e8b8928823
+# ╟─3473cfca-190f-45f8-968a-0613ee2042ac
+# ╟─c4cb1323-42ff-4d38-b76a-e3e8b8928823
