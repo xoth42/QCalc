@@ -45,61 +45,6 @@ end
 # ╔═╡ b11d0525-1bfc-458d-a46a-dd15992b3964
 using PlutoUI
 
-# ╔═╡ 45b89936-efcf-4f9a-b76a-ec0f9e07dc9b
-begin
-	using ProgressLogging:@progress
-	debug = false
-	function find_3params_for_gate(param_ranges,gate,target;err=1e-1)
-		tot = 0
-		# for 3 params only, gate of 2 by 2
-		# param_ranges: [start:step:end, start:step:end, ...]
-		# For each parameter to input into the gate, provide a range that that parameter is allowed. 
-		# gate will be called gate(param1,param2,...)
-		# until the output of the gate call is equivalent to the provided target within an error, ;err = 1e-10
-		t_r = real.(target)
-		t_i = imag.(target)
-		function is_within(matrix,t_r,t_i,err) 
-			for i in (1:4)
-				# if difference is greater than error, exit
-				# real
-				r = real(matrix[i]) 
-				diff_r = abs(r - t_r[i])
-				debug && println(diff_r)
-				if diff_r > err
-					return false
-				end
-				# imag
-				img = imag(matrix[i]) 
-				diff_i = abs(img - t_i[i])
-				if diff_i > err
-					return false
-				end
-			
-			end
-			return true
-		end
-
-		found = (guess)-> is_within(guess,t_r,t_i,err)
-					
-		@progress for i in param_ranges[1]
-			for j in param_ranges[2]
-				for k in param_ranges[3]
-					tot += 1
-					debug && println("$i\t$j\t$k")
-					g = gate(i,j,k)
-					debug && println(g)
-					if found(g)
-						# println("Tries: $tot")
-						return ((i,j,k),g)
-					end
-				end
-			end
-		end
-		# println("Tries: $tot")
-		return nothing
-	end
-end
-
 # ╔═╡ 68f5b298-8de1-4a6e-a2b9-fea70ddf9c2a
 begin
 	# OpenQASM 2.0 U gate: Rz(ϕ)Ry(θ)Rz(λ)
@@ -266,8 +211,66 @@ dump(stab_op)
 # ╔═╡ a514a4bf-3b40-4d1a-b9a5-7ee6374a5f52
 stab_op
 
+# ╔═╡ 45b89936-efcf-4f9a-b76a-ec0f9e07dc9b
+begin
+	# using ProgressLogging:@progress
+	debug = false
+	# Brute force iterative search for 3 parameters given 2x2 matrix and function: f(a,b,c) -> 2x2
+	function find_3params_for_gate(param_ranges,gate,target;err=1e-1)
+		tot = 0
+		# for 3 params only, gate of 2 by 2
+		# param_ranges: [start:step:end, start:step:end, ...]
+		# For each parameter to input into the gate, provide a range that that parameter is allowed. 
+		# gate will be called gate(param1,param2,...)
+		# until the output of the gate call is equivalent to the provided target within an error, ;err = 1e-10
+		t_r = real.(target)
+		t_i = imag.(target)
+		function is_within(matrix,t_r,t_i,err) 
+			for i in (1:4)
+				# if difference is greater than error, exit
+				# real
+				r = real(matrix[i]) 
+				diff_r = abs(r - t_r[i])
+				debug && println(diff_r)
+				if diff_r > err
+					return false
+				end
+				# imag
+				img = imag(matrix[i]) 
+				diff_i = abs(img - t_i[i])
+				if diff_i > err
+					return false
+				end
+			
+			end
+			return true
+		end
+
+		found = (guess)-> is_within(guess,t_r,t_i,err)
+					
+		# @progress for i in param_ranges[1]
+		for i in param_ranges[1]
+			for j in param_ranges[2]
+				for k in param_ranges[3]
+					tot += 1
+					debug && println("$i\t$j\t$k")
+					g = gate(i,j,k)
+					debug && println(g)
+					if found(g)
+						# println("Tries: $tot")
+						return ((i,j,k),g)
+					end
+				end
+			end
+		end
+		# println("Tries: $tot")
+		return nothing
+	end
+end
+
 # ╔═╡ f5ba370b-82be-4f8a-8d79-e0cce14d1efc
 begin
+	# Find the U() parameters for a given gate in matrix form
 	function find_this_gate(gate,grain=pi/2)
 		target_range = 0:grain:4pi
 		target_ranges = (target_range,target_range,target_range)
@@ -282,7 +285,7 @@ md"Resulting params:  U(θ,ϕ,λ)"
 
 # ╔═╡ cb220082-061e-4475-aad3-7b080a71a201
 begin
-	
+	# format params so they are readable
 	function pretty_param(param; err=1e-10) # the param will come in (ex: 0, 1.5708, 4.71239...)
 		# and we need to return a readable factor of pi
 		if param < 0
@@ -302,6 +305,7 @@ begin
 		return "$(pis)π"
 	end
 
+	# format u-gate output so it looks correct: "U(1,2,3..)"
 	function pparams(params;init="U")
 		s =  "$(init)("
 		for i in 1:2
@@ -358,7 +362,7 @@ end
 # ╟─aa03cae3-ec49-42c1-a667-bc0d55a2d6ad
 # ╟─3a58c739-f72b-4bd8-a596-07e822281ad7
 # ╟─ea29edf4-bc01-487d-be1e-a74321c34686
-# ╠═ab48c4af-80fc-4a49-8a92-9cf7eda20ef2
+# ╟─ab48c4af-80fc-4a49-8a92-9cf7eda20ef2
 # ╟─e67c9298-5175-4692-93c9-cc5c7b6e33fa
 # ╟─300ee489-b091-418e-a13f-28832e33c3e2
 # ╠═a514a4bf-3b40-4d1a-b9a5-7ee6374a5f52
