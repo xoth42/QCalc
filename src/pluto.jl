@@ -89,13 +89,13 @@ begin
 					g = gate(i,j,k)
 					debug && println(g)
 					if found(g)
-						println("Tries: $tot")
+						# println("Tries: $tot")
 						return ((i,j,k),g)
 					end
 				end
 			end
 		end
-		println("Tries: $tot")
+		# println("Tries: $tot")
 		return nothing
 	end
 end
@@ -326,9 +326,26 @@ begin
 	println(pretty_matrix(out[2]))
 end
 
+# ╔═╡ fd87399a-95f0-401f-b3d3-6fa981318be3
+begin
+	function qasm_out(target)
+		op = target |> Operator
+		matrix = op.data
+		out = find_this_gate(matrix)
+		print("\n")
+		print(target)
+		print("\n")
+		print(out == nothing ? "not found" : "gate _?_ q {$(pparams(out[1])) q;}")
+		print("\n")
+	end
+	for this_g in targets
+		qasm_out(this_g)
+	end
+end
+
 # ╔═╡ Cell order:
 # ╠═d62e8a66-84d9-11f0-13c4-c12995195713
-# ╟─68f5b298-8de1-4a6e-a2b9-fea70ddf9c2a
+# ╠═68f5b298-8de1-4a6e-a2b9-fea70ddf9c2a
 # ╟─c82d3aa7-2a32-4b34-839d-fbd78464094c
 # ╟─b11d0525-1bfc-458d-a46a-dd15992b3964
 # ╟─59d7a44f-c33b-4051-9a33-39bb4701fcd8
@@ -341,14 +358,15 @@ end
 # ╟─aa03cae3-ec49-42c1-a667-bc0d55a2d6ad
 # ╟─3a58c739-f72b-4bd8-a596-07e822281ad7
 # ╟─ea29edf4-bc01-487d-be1e-a74321c34686
-# ╟─ab48c4af-80fc-4a49-8a92-9cf7eda20ef2
+# ╠═ab48c4af-80fc-4a49-8a92-9cf7eda20ef2
 # ╟─e67c9298-5175-4692-93c9-cc5c7b6e33fa
 # ╟─300ee489-b091-418e-a13f-28832e33c3e2
-# ╟─a514a4bf-3b40-4d1a-b9a5-7ee6374a5f52
-# ╟─45b89936-efcf-4f9a-b76a-ec0f9e07dc9b
-# ╟─f5ba370b-82be-4f8a-8d79-e0cce14d1efc
+# ╠═a514a4bf-3b40-4d1a-b9a5-7ee6374a5f52
+# ╠═45b89936-efcf-4f9a-b76a-ec0f9e07dc9b
+# ╠═f5ba370b-82be-4f8a-8d79-e0cce14d1efc
 # ╟─67477359-634f-49ad-b32d-7190742ad45e
-# ╟─cb220082-061e-4475-aad3-7b080a71a201
+# ╠═cb220082-061e-4475-aad3-7b080a71a201
 # ╠═234025cd-9ffa-4958-8a55-8d6cc6e1b144
 # ╟─3473cfca-190f-45f8-968a-0613ee2042ac
-# ╟─c4cb1323-42ff-4d38-b76a-e3e8b8928823
+# ╠═c4cb1323-42ff-4d38-b76a-e3e8b8928823
+# ╠═fd87399a-95f0-401f-b3d3-6fa981318be3
